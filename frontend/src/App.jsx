@@ -1,10 +1,37 @@
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { AuthProvider } from "./context/AuthContext";
+import ProtectedRoute from "./components/auth/ProtectedRoute";
+import AppLayout from "./components/layout/AppLayout";
+import Login from "./pages/Login";
+import Dashboard from "./pages/Dashboard";
+import Reports from "./pages/Reports";
+
 export default function App() {
   return (
-    <div className="min-h-screen flex items-center justify-center bg-slate-100 text-slate-900">
-      <div className="text-center">
-        <h1 className="text-3xl font-bold">SuporteAgora ITSM</h1>
-        <p className="text-slate-600 mt-2">Frontend inicializado.</p>
-      </div>
-    </div>
+    <AuthProvider>
+      <BrowserRouter>
+        <Routes>
+          <Route path="/login" element={<Login />} />
+          <Route
+            element={
+              <ProtectedRoute>
+                <AppLayout />
+              </ProtectedRoute>
+            }
+          >
+            <Route path="/" element={<Dashboard />} />
+            <Route
+              path="/reports"
+              element={
+                <ProtectedRoute staffOnly>
+                  <Reports />
+                </ProtectedRoute>
+              }
+            />
+          </Route>
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+      </BrowserRouter>
+    </AuthProvider>
   );
 }
