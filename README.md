@@ -56,12 +56,49 @@ suporteagora/
 └── README.md
 ```
 
-## Como rodar
+## Como rodar (desenvolvimento)
 
 ```bash
 docker compose up --build
 ```
 
 - Backend: http://localhost:8000 (docs em `/docs`)
-- Frontend: http://localhost:5173
+- Frontend: http://localhost:5173 (Vite com hot reload)
 - Postgres: localhost:5432 (user: `itsm` / pass: `itsm`)
+
+## Como rodar (produção)
+
+Arquivos de produção:
+
+- `backend/Dockerfile.prod` — multi-stage, gunicorn + uvicorn workers, usuário não-root, healthcheck.
+- `frontend/Dockerfile.prod` — multi-stage (Node build → Nginx alpine), serve `dist/` estático e faz proxy reverso para o backend.
+- `frontend/nginx.conf` — SPA fallback, gzip, cache imutável para `/assets/`, headers de segurança.
+- `docker-compose.prod.yml` — orquestra `db`, `backend` e `frontend` com healthchecks, rede privada e volumes persistentes.
+
+```bash
+cp .env.prod.example .env
+# edite .env e troque todas as senhas/segredos
+docker compose -f docker-compose.prod.yml up -d --build
+```
+
+Acesse `http://<seu-host>` (porta 80). O frontend serve a SPA e faz proxy de `/api/*` para o backend, então **a API não fica exposta diretamente** — apenas o nginx é publicado.
+
+### Persistência de dados
+
+Os dados do PostgreSQL ficam no volume nomeado `pgdata` (driver `local`), montado em `/var/lib/postgresql/data`. Reinícios e recriação dos containers preservam tudo. Os logs do backend ficam no volume `backend_logs`.
+
+```bash
+# Inspecionar volumes
+docker volume ls | grep suporteagora
+docker volume inspect suporteagora_pgdata
+
+# Backup do banco
+docker compose -f docker-compose.prod.yml exec db \
+    pg_dump -U itsm itsm > backup_$(date +%F).sql
+
+# Restore
+cat backup.sql | docker compose -f docker-compose.prod.yml exec -T db \
+    psql -U itsm -d itsm
+```
+
+> Em produção, faça `alembic upgrade head` antes de subir o backend (ou troque o `create_all` por migrations no startup).
