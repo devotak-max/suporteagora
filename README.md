@@ -66,6 +66,27 @@ docker compose up --build
 - Frontend: http://localhost:5173 (Vite com hot reload)
 - Postgres: localhost:5432 (user: `itsm` / pass: `itsm`)
 
+## Provisionar um Ubuntu Server zerado
+
+Para instalar do zero numa VM/servidor Ubuntu que tem apenas OpenSSH, use o
+`bootstrap.sh` (instala Docker, clona o repo, configura UFW/NTP e roda o deploy):
+
+```bash
+# Na máquina Ubuntu, conectado por SSH como usuário sudoer:
+curl -fsSL https://raw.githubusercontent.com/devotak-max/suporteagora/claude/itsm-system-setup-dScpZ/bootstrap.sh \
+  -o bootstrap.sh
+chmod +x bootstrap.sh
+
+sudo REPO_URL=https://github.com/devotak-max/suporteagora.git \
+     REPO_BRANCH=claude/itsm-system-setup-dScpZ \
+     ALLOWED_CIDR=10.0.0.0/8 \
+     ./bootstrap.sh
+```
+
+Variáveis aceitas: `REPO_URL`, `REPO_BRANCH`, `INSTALL_DIR` (default `/opt/suporteagora`),
+`APP_USER`, `ALLOWED_CIDR`, `FRONTEND_PORT`, `FRONTEND_HOST`,
+`SKIP_FIREWALL=1`, `SKIP_DEPLOY=1`.
+
 ## Como rodar (produção)
 
 Arquivos de produção:
