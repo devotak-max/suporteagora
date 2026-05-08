@@ -76,10 +76,22 @@ Arquivos de produção:
 - `docker-compose.prod.yml` — orquestra `db`, `backend` e `frontend` com healthchecks, rede privada e volumes persistentes.
 
 ```bash
+# Opção A — script automatizado (gera segredos, ajusta permissões e sobe)
+./deploy.sh
+
+# Opção B — manual
 cp .env.prod.example .env
 # edite .env e troque todas as senhas/segredos
+chmod 600 .env
 docker compose -f docker-compose.prod.yml up -d --build
 ```
+
+O `deploy.sh` é idempotente: rodar de novo não regenera segredos já preenchidos,
+apenas faz `build` e `up -d`. Argumentos úteis:
+
+- `./deploy.sh --recreate` — derruba e recria os containers (volumes preservados).
+- `./deploy.sh --logs` — segue o log do backend após subir.
+- `FRONTEND_HOST=suporte.intranet.local ./deploy.sh` — sugere `CORS_ORIGINS` com esse host.
 
 Acesse `http://<seu-host>` (porta 80). O frontend serve a SPA e faz proxy de `/api/*` para o backend, então **a API não fica exposta diretamente** — apenas o nginx é publicado.
 
