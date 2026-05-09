@@ -3,16 +3,18 @@ FROM node:20-alpine AS builder
 
 WORKDIR /app
 
-ENV NODE_ENV=production
+# NODE_ENV não é setado aqui de propósito: com NODE_ENV=production o npm
+# pula as devDependencies (onde mora o vite) e o build quebra.
+# O `vite build` já produz bundle de produção independentemente.
 
 ARG VITE_API_URL=/api/v1
 ENV VITE_API_URL=${VITE_API_URL}
 
 COPY package*.json ./
 RUN if [ -f package-lock.json ]; then \
-        npm ci --no-audit --no-fund; \
+        npm ci --include=dev --no-audit --no-fund; \
     else \
-        npm install --no-audit --no-fund; \
+        npm install --include=dev --no-audit --no-fund; \
     fi
 
 COPY . .
